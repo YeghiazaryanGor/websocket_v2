@@ -1,0 +1,1 @@
+This program creates a websocket that gives us approximate position of the moon based on our position on the earth.
