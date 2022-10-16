@@ -70,7 +70,7 @@ def compute_rectangular_coordinates(eccAnomaly, ecc, meanDist):
     return x, y
 
 
-def calculate_distance_trunAnomaly(x, y):
+def calculate_distance_trueAnomaly(x, y):
     """
         This function calculates distance and true anomaly by converting
         x,y coordinates.
@@ -95,7 +95,7 @@ def convert_to_raDec(xeclip, yeclip, zeclip):
     return ra, dec
 
 
-async def handler(websocket, path):
+async def handler(websocket):
     print("Client connected")
     try:
         while True:
@@ -110,7 +110,7 @@ async def handler(websocket, path):
                 orb_elems["Ecc"],
                 orb_elems["MeanDist"]
             )
-            dist_trueAn = calculate_distance_trunAnomaly(
+            dist_trueAn = calculate_distance_trueAnomaly(
                 rect_coord[0],
                 rect_coord[1]
             )
