@@ -15,7 +15,7 @@ def calculate_day_difference():
     d = today.day
     m = today.month
     days_diff = 367 * y - (
-                ((7 * (y + ((m + 9) / 12))) / 4) + ((275 * m) / 9) + d - 730530)
+            ((7 * (y + ((m + 9) / 12))) / 4) + ((275 * m) / 9) + d - 730530)
     return days_diff
 
 
@@ -51,11 +51,9 @@ def calculate_orbital_elements(days_diff) -> dict:
 
 def calculate_eccentric_anomaly(meanAn, ecc):
     E0 = meanAn + ((180 / pi) * ecc * sin(meanAn) * (1 + (ecc * cos(meanAn))))
-    print(E0)
     E1 = E0 - ((E0 - (((180 / pi) * ecc * sin(E0)) - meanAn)) / (
-                1 - (ecc * cos(E0))))
+            1 - (ecc * cos(E0))))
     while E1 - E0 <= 0.005:
-        print(E1)
         E0 = E1
         E1 = (E0 - (E0 - (((180 / pi) * ecc * sin(E0)) - meanAn))) / (
                 1 - (ecc * cos(E0)))
@@ -72,7 +70,11 @@ def compute_rectangular_coordinates(eccAnomaly, ecc, meanDist):
     return x, y
 
 
-def convertToDistanceAndTrueAnomaly(x, y):
+def calculate_distance_trueAnomaly(x, y):
+    """
+        This function calculates distance and true anomaly by converting
+        x,y coordinates.
+    """
     dist = ((x * x) + (y * y)) ** 0.5
     trueAn = atan2(y, x)
     return dist, trueAn
@@ -87,17 +89,17 @@ def calculate_ecliptic_coordinates(dist, trueAn, perArg, LANode, incl):
     return xeclip, yeclip, zeclip
 
 
-def convert_to_latlong(xeclip, yeclip, zeclip):
-    long = atan2(yeclip, xeclip)
-    lat = atan2(zeclip, ((xeclip * xeclip) + (yeclip * yeclip)) ** 0.5)
-    return lat, long
+def convert_to_raDec(xeclip, yeclip, zeclip):
+    ra = atan2(yeclip, xeclip)
+    dec = atan2(zeclip, ((xeclip * xeclip) + (yeclip * yeclip)) ** 0.5)
+    return ra, dec
 
 
-async def handler(websocket, path):
+async def handler(websocket):
     print("Client connected")
     try:
         while True:
-            days_diff = -3543
+            days_diff = calculate_day_difference()
             orb_elems = calculate_orbital_elements(days_diff)
             ecc_anomaly = calculate_eccentric_anomaly(
                 orb_elems["MeanAnomaly"],
@@ -108,7 +110,7 @@ async def handler(websocket, path):
                 orb_elems["Ecc"],
                 orb_elems["MeanDist"]
             )
-            dist_trueAn = convertToDistanceAndTrueAnomaly(
+            dist_trueAn = calculate_distance_trueAnomaly(
                 rect_coord[0],
                 rect_coord[1]
             )
@@ -119,15 +121,15 @@ async def handler(websocket, path):
                 orb_elems["LANode"],
                 orb_elems["Incl"]
             )
-            latlong = convert_to_latlong(
+            raDec = convert_to_raDec(
                 eclip_coord[0],
                 eclip_coord[1],
                 eclip_coord[2]
             )
-            message = str(latlong[0]) + ", " + str(latlong[1])
+            message = str(raDec[0]) + ", " + str(raDec[1])
             await websocket.send(message)
             await asyncio.sleep(10)
-    except websockets.exceptions.ConnectionClosed:
+    except websockets.ConnectionClosed:
         print("Client just disconnected")
 
 
@@ -138,4 +140,3 @@ if __name__ == "__main__":
     start_server = websockets.serve(handler, "localhost", PORT)
     asyncio.get_event_loop().run_until_complete(start_server)
     asyncio.get_event_loop().run_forever()
-
