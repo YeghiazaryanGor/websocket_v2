@@ -129,7 +129,7 @@ async def handler(websocket):
             message = str(raDec[0]) + ", " + str(raDec[1])
             await websocket.send(message)
             await asyncio.sleep(10)
-    except websockets.exceptions.ConnectionClosed:
+    except websockets.ConnectionClosed:
         print("Client just disconnected")
 
 
